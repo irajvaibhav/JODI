@@ -7,6 +7,7 @@ import { authRouter } from './auth.js';
 import { api } from './api.js';
 import { attachSockets, notify, istHour } from './realtime.js';
 import { compatibility } from './compat.js';
+import * as pages from './pages.js';
 
 for (const k of ['DATABASE_URL', 'JWT_SECRET', 'BIRTH_KEY']) if (!process.env[k]) throw new Error(`Missing env ${k}`);
 
@@ -24,6 +25,9 @@ app.use((req, res, next) => {
 // Touches the DB so uptime pings also count as activity (Supabase free pauses after 7 idle days).
 app.get('/health', async (req, res) => { await q('SELECT 1'); res.json({ ok: true }); });
 app.use('/auth', authRouter);
+app.get('/', (req, res) => res.send(pages.home()));
+app.get('/privacy', (req, res) => res.send(pages.privacy()));
+app.get('/terms', (req, res) => res.send(pages.terms()));
 
 // ---------- public share card (growth loop; no signup needed, no birth data, no photos) ----------
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
