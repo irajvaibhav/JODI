@@ -62,5 +62,5 @@ export type Card = {
   id: string; name: string; age: number; city?: string; bio?: string; profession?: string; education?: string;
   interests: string[]; lifestyle: Record<string, string>; intent?: string; photos: string[]; distanceKm?: number | null;
   astro?: { sun: string; moon?: string; rising?: string | null; element?: string; nakshatra?: string | null } | null;
-  compat?: { overall: number; astro: number; interests: number; personality: number; lifestyle: number; reasons: string[] };
+  compat?: { overall: number; astro: number; interests: number; personality: number; lifestyle: number; reasons: string[]; difference?: string | null };
 };

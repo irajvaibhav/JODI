@@ -52,7 +52,7 @@ async function create() {
     await q(`INSERT INTO astro(user_id, birth_enc, time_known, sun, moon, rising, nakshatra, element) VALUES ($1,$2,true,$3,$4,$5,$6,$7) ON CONFLICT (user_id) DO NOTHING`,
       [u.id, encrypt({ dob, time, place: `${city}, India` }), astro.sun, astro.moon, astro.rising, astro.nakshatra, astro.element]);
     await q(`INSERT INTO preferences(user_id, genders, age_min, age_max, max_km, intent) VALUES ($1,$2,18,40,1000,$3) ON CONFLICT (user_id) DO NOTHING`,
-      [u.id, [woman ? 'Man' : 'Woman'], pick(META.intents.slice(0, 2))]);
+      [u.id, [woman ? 'Man' : 'Woman'], META.intents[Math.floor(i / 2) % META.intents.length]]); // spread within each gender so every intent has matches
     const has = await one(`SELECT count(*)::int n FROM media WHERE owner_id=$1`, [u.id]);
     if (!has.n) {
       const id = PHOTOS[woman ? 'women' : 'men'][Math.floor(i / 2)];

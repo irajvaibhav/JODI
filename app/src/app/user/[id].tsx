@@ -102,6 +102,12 @@ export default function UserDetail() {
               <Text style={{ color: C.ink, flex: 1, lineHeight: 20 }}>{r}</Text>
             </View>
           ))}
+          {c.difference ? (
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, marginBottom: 6, alignItems: 'flex-start' }}>
+              <Text style={{ color: '#F5A623', fontSize: 16 }}>◐</Text>
+              <Text style={{ color: C.inkMuted, flex: 1, lineHeight: 20 }}><Text style={{ fontWeight: '600', color: C.ink }}>Something to explore: </Text>{c.difference}</Text>
+            </View>
+          ) : null}
           <LinearGradient colors={['#FBEFFA', '#EEE6FF']} style={{ borderRadius: 18, padding: 16, marginTop: 10, flexDirection: 'row', gap: 12 }}>
             <Text style={{ fontSize: 22, color: C.purple }}>✧</Text>
             <View style={{ flex: 1 }}>

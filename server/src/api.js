@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 import { q, one, track, encrypt, decrypt, ageFrom } from './db.js';
 import { requireAuth } from './auth.js';
 import { computeAstro, geocode, searchPlaces, NAKSHATRAS, SIGNS, elementOf } from './astro.js';
-import { compatibility, META } from './compat.js';
+import { compatibility, intentsCompatible, META } from './compat.js';
 import * as ai from './ai.js';
 import { emitTo, notify } from './realtime.js';
 
@@ -63,7 +63,7 @@ function publicCard(u, viewer, compat) {
     interests: u.interests, lifestyle: u.lifestyle, intent: u.intent, photos: u.photos.map(id => `/media/${id}`),
     astro: u.astro && { sun: u.astro.sun, moon: u.astro.moon, rising: u.astro.rising, element: u.astro.element, nakshatra: NAKSHATRAS[u.astro.nakshatra] ?? null },
     distanceKm: d == null ? null : Math.max(1, Math.round(d)),
-    compat: compat && { overall: compat.overall, astro: compat.astro, interests: compat.interests, personality: compat.personality, lifestyle: compat.lifestyle, reasons: compat.reasons },
+    compat: compat && { overall: compat.overall, astro: compat.astro, interests: compat.interests, personality: compat.personality, lifestyle: compat.lifestyle, reasons: compat.reasons, difference: compat.difference },
   };
 }
 
@@ -172,7 +172,8 @@ api.post('/me/complete', h(async (req, res) => {
     if (process.env.DEMO_LIKES === 'true') await q(`INSERT INTO swipes(swiper, target, action)
       SELECT d.id, $1, 'jodi' FROM users d JOIN profiles dp ON dp.user_id=d.id JOIN preferences dpr ON dpr.user_id=d.id
       WHERE d.phone LIKE '+910000000%' AND $2 = ANY(dpr.genders) AND (cardinality($3::text[])=0 OR dp.gender = ANY($3))
-      ORDER BY random() LIMIT 6 ON CONFLICT DO NOTHING`, [req.uid, u.gender, u.genders || []]);
+        AND ($4::text IS NULL OR dpr.intent IS NULL OR dpr.intent = $4 OR 'Still figuring it out' IN (dpr.intent, $4))
+      ORDER BY random() LIMIT 6 ON CONFLICT DO NOTHING`, [req.uid, u.gender, u.genders || [], u.intent]);
   }
   res.json({ ok: true });
 }));
@@ -252,6 +253,7 @@ async function candidates(me, { filter, limit = 20, extraWhere = '', params = []
 
   return rows
     .filter(u => (u.age_min == null || (me.age >= u.age_min && me.age <= u.age_max)))
+    .filter(u => intentsCompatible(me.intent, u.intent))
     .filter(u => { const d = km(me, u); return d == null || me.max_km >= 1000 || d <= me.max_km; })
     .filter(u => filter !== 'same_zodiac' || (u.astro?.sun && u.astro.sun === me.astro?.sun))
     .map(u => ({ u, c: compatibility(me, u) }))

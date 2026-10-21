@@ -100,7 +100,27 @@ export function compatibility(x, y) {
   reasons.sort((p, q) => q.s - p.s);
   const fill = ['Profiles with a strong overall overlap', 'Balanced energy across interests and lifestyle', 'Room to discover new things together'];
   while (reasons.length < 3) reasons.push({ s: 0, text: fill[reasons.length] });
-  return { overall: Math.round(overall), ...parts, reasons: reasons.slice(0, 4).map(r => r.text) };
+  return { overall: Math.round(overall), ...parts, reasons: reasons.slice(0, 4).map(r => r.text), difference: difference(x, y) };
 }
+
+// One neutral "potential difference" — framed as something to talk about, never as a red flag.
+const DIFF_COPY = {
+  sleep: (a, b) => `${a} meets ${b.toLowerCase()} — you might need to agree on date times!`,
+  workout: () => 'Different fitness routines — maybe one of you converts the other?',
+  diet: () => 'Different food preferences — plenty of new restaurants to try together',
+  drink: () => 'Different takes on drinking — easy to plan dates you both enjoy',
+};
+function difference(x, y) {
+  for (const k of ['sleep', 'workout', 'diet', 'drink']) {
+    const a = x.lifestyle?.[k], b = y.lifestyle?.[k];
+    if (a && b && a !== b && a !== 'Depends' && b !== 'Depends') return DIFF_COPY[k](a, b);
+  }
+  const p = META.personality.find(p => !p.complementary && x.personality?.[p.key] && y.personality?.[p.key] && Math.abs(x.personality[p.key] - y.personality[p.key]) >= 3);
+  if (p) return `Different ${p.trait} — a fun one to compare notes on`;
+  return null;
+}
+
+/** Hard intent filter: "Still figuring it out" (or unset) is open to everyone; otherwise intents must match. */
+export const intentsCompatible = (a, b) => !a || !b || a === b || [a, b].includes('Still figuring it out');
 
 export { SIGNS, ELEMENTS };

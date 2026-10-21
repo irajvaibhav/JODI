@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { computeAstro, zonedToUtc } from './astro.js';
-import { compatibility } from './compat.js';
+import { compatibility, intentsCompatible } from './compat.js';
 import { safe } from './ai.js';
 
 test('astro: J2000 noon UTC -> Sun Capricorn (tropical), sane Vedic fields', () => {
@@ -32,6 +32,16 @@ test('compatibility is symmetric-ish, bounded and gives 3+ reasons', () => {
   assert.ok(c.reasons.some(r => r.includes('Travel')));
   assert.ok(Math.abs(c.overall - compatibility(b, a).overall) <= 2);
   assert.ok(compatibility({}, {}).reasons.length >= 3);
+});
+
+test('intent filter and potential difference', () => {
+  assert.ok(intentsCompatible('Long-term relationship', 'Long-term relationship'));
+  assert.ok(!intentsCompatible('Long-term relationship', 'Something casual'));
+  assert.ok(intentsCompatible('Still figuring it out', 'Something casual'));
+  assert.ok(intentsCompatible(null, 'New friends'));
+  const d = compatibility({ lifestyle: { sleep: 'Early bird' } }, { lifestyle: { sleep: 'Night owl' } }).difference;
+  assert.match(d, /Early bird meets night owl/);
+  assert.equal(compatibility({ lifestyle: { sleep: 'Early bird' } }, { lifestyle: { sleep: 'Early bird' } }).difference, null);
 });
 
 test('privacy filter blocks birth data and deterministic claims', () => {
