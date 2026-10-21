@@ -1,7 +1,8 @@
 import { one, q } from './db.js';
 import { SIGN_VIBES, NAKSHATRAS } from './astro.js';
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Comma-separated fallback chain: busy (503), retired (404) or rate-limited (429) models fall through to the next.
+const MODELS = (process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-3.5-flash-lite').split(',').map(s => s.trim()).filter(Boolean);
 
 const GUARDRAILS = `You write copy for Jodi, an astrology-flavoured dating app for Indian Gen-Z (18-30).
 Rules you must always follow:
@@ -14,24 +15,31 @@ async function gemini(prompt, { image, maxTokens = 400 } = {}) {
   if (!process.env.GEMINI_API_KEY) return null;
   const parts = [{ text: prompt }];
   if (image) parts.push({ inline_data: { mime_type: image.mime, data: image.data.toString('base64') } });
-  try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: GUARDRAILS }] },
-        contents: [{ role: 'user', parts }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.9, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 } },
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`);
-    const text = (await r.json()).candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
-    return JSON.parse(text);
-  } catch (e) {
-    console.error('gemini', e.message);
-    return null;
+  for (const model of MODELS) {
+    // Thinking off = faster + cheaper; models that reject the setting (400) are retried without it.
+    for (const thinking of [{ thinkingConfig: { thinkingBudget: 0 } }, {}]) {
+      try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: GUARDRAILS }] },
+            contents: [{ role: 'user', parts }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.9, maxOutputTokens: maxTokens, ...thinking },
+          }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (r.status === 400 && thinking.thinkingConfig) continue;
+        if (!r.ok) { console.error('gemini', model, r.status, (await r.text()).slice(0, 150)); break; }
+        const text = (await r.json()).candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '';
+        return JSON.parse(text);
+      } catch (e) {
+        console.error('gemini', model, e.message);
+        break;
+      }
+    }
   }
+  return null;
 }
 
 // Final privacy/guardrail layer on every AI string shown to users.
