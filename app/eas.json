@@ -11,14 +11,14 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://jodi-api.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "489151397436-02tptj7gkgmcn87h2qn323ap8meac9qh.apps.googleusercontent.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://jodi-api.onrender.com",
-        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": ""
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "489151397436-02tptj7gkgmcn87h2qn323ap8meac9qh.apps.googleusercontent.com"
       }
     }
   }
