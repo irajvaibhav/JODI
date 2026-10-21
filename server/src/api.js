@@ -165,7 +165,15 @@ api.post('/me/complete', h(async (req, res) => {
   const missing = [!u.dob && 'birth details', !u.name && 'name', !u.gender && 'gender', u.photos.length < 2 && 'at least 2 photos',
     (u.interests || []).length < 3 && 'at least 3 interests', !u.genders?.length && 'who you\'d like to meet'].filter(Boolean);
   if (missing.length) return bad(res, `Still needed: ${missing.join(', ')}`);
-  if (!u.onboarded) { await q('UPDATE users SET onboarded=true WHERE id=$1', [req.uid]); track(req.uid, 'onboarding.completed'); }
+  if (!u.onboarded) {
+    await q('UPDATE users SET onboarded=true WHERE id=$1', [req.uid]);
+    track(req.uid, 'onboarding.completed');
+    // Client-demo only: a few seeded profiles who'd want to meet this user "like" them, so Likes/match can be shown. Turn off for real users.
+    if (process.env.DEMO_LIKES === 'true') await q(`INSERT INTO swipes(swiper, target, action)
+      SELECT d.id, $1, 'jodi' FROM users d JOIN profiles dp ON dp.user_id=d.id JOIN preferences dpr ON dpr.user_id=d.id
+      WHERE d.phone LIKE '+910000000%' AND $2 = ANY(dpr.genders) AND (cardinality($3::text[])=0 OR dp.gender = ANY($3))
+      ORDER BY random() LIMIT 6 ON CONFLICT DO NOTHING`, [req.uid, u.gender, u.genders || []]);
+  }
   res.json({ ok: true });
 }));
 

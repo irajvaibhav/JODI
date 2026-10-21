@@ -4,6 +4,7 @@ services:
     name: jodi-api
     runtime: node
     rootDir: server
+    region: singapore # closest Render region to the Supabase DB (Tokyo)
     plan: free # sleeps after 15 min idle: keep it awake by pinging /health every 5 min (UptimeRobot)
     buildCommand: npm ci
     startCommand: npm start
@@ -18,7 +19,7 @@ services:
       - key: BIRTH_KEY
         sync: false # 64 hex chars (openssl rand -hex 32). Never change it after launch or birth data becomes unreadable.
       - key: ADMIN_TOKEN
-        generateValue: true
+        sync: false
       - key: OTP_DEV
         value: "true" # set "false" once MSG91 is configured
       - key: DEMO_PHONE
@@ -29,5 +30,9 @@ services:
         sync: false
       - key: MSG91_TEMPLATE_ID
         sync: false
+      - key: DEMO_LIKES
+        value: "true" # client demo: seeded profiles like each new user. Set "false" for real users.
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash,gemini-3.5-flash-lite
       - key: APP_DOWNLOAD_URL
         sync: false
