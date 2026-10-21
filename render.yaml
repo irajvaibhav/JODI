@@ -1,0 +1,33 @@
+# Render Blueprint for the Jodi API. Database: use Neon/Supabase Postgres and paste its URL as DATABASE_URL.
+services:
+  - type: web
+    name: jodi-api
+    runtime: node
+    rootDir: server
+    plan: free # sleeps after 15 min idle: keep it awake by pinging /health every 5 min (UptimeRobot)
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BIRTH_KEY
+        sync: false # 64 hex chars (openssl rand -hex 32). Never change it after launch or birth data becomes unreadable.
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: OTP_DEV
+        value: "true" # set "false" once MSG91 is configured
+      - key: DEMO_PHONE
+        value: "9999999999"
+      - key: DEMO_OTP
+        value: "123456"
+      - key: MSG91_AUTH_KEY
+        sync: false
+      - key: MSG91_TEMPLATE_ID
+        sync: false
+      - key: APP_DOWNLOAD_URL
+        sync: false

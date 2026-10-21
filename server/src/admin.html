@@ -1,0 +1,31 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jodi Admin</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;padding:16px;background:#f6f5fb;color:#1a1033}h1{font-weight:300;letter-spacing:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}.m{background:#fff;border-radius:12px;padding:12px}
+.m b{font-size:24px;display:block}.m small{color:#888}.r{background:#fff;border-radius:12px;padding:12px;margin:10px 0;display:flex;gap:12px;flex-wrap:wrap}
+.r img{width:64px;height:64px;object-fit:cover;border-radius:8px}button{border:0;border-radius:8px;padding:8px 14px;cursor:pointer;margin-right:6px}
+.ban{background:#e5484d;color:#fff}input{padding:8px;border-radius:8px;border:1px solid #ccc}
+</style></head>
+<body>
+<h1>JODI · ADMIN</h1>
+<p><input id="t" type="password" placeholder="Admin token"> <button onclick="load()">Load</button></p>
+<h2>Metrics</h2><div class="grid" id="metrics"></div>
+<h2>Open reports (human review)</h2><div id="reports"></div>
+<script>
+const tok = () => document.getElementById('t').value;
+const api = (p, o = {}) => fetch(p, { ...o, headers: { 'x-admin-token': tok(), 'content-type': 'application/json' } }).then(r => r.json());
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+async function load() {
+  const m = await api('/admin/api/metrics');
+  document.getElementById('metrics').innerHTML = m.map(x => `<div class="m"><small>${esc(x.name)}</small><b>${esc(x.value)}${x.name === 'Users' || x.name.startsWith('Meaningful') ? '' : '%'}</b><small>target ${esc(x.target)}</small></div>`).join('');
+  const r = await api('/admin/api/reports');
+  document.getElementById('reports').innerHTML = r.length ? r.map(x => `<div class="r">
+    ${(x.photos || []).slice(0, 3).map(id => `<img src="/media/${id}">`).join('')}
+    <div style="flex:1;min-width:200px"><b>${esc(x.name || 'Unknown')}</b> · ${esc(x.reason)} · ${x.total} report(s) ${x.banned ? '· BANNED' : ''}<br>
+    <small>${esc(x.details)}</small><br><small>${new Date(x.created_at).toLocaleString()} · ${x.reporter ? 'user report' : 'automated'}</small></div>
+    <div><button onclick="act('${x.id}','dismiss')">Dismiss</button><button class="ban" onclick="act('${x.id}','ban')">Ban user</button></div></div>`).join('') : '<p>No open reports 🎉</p>';
+}
+async function act(id, action) { await api('/admin/api/reports/' + id, { method: 'POST', body: JSON.stringify({ action }) }); load(); }
+</script>
+</body></html>

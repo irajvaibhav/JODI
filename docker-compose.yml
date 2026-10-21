@@ -1,0 +1,9 @@
+# Local Postgres for development: docker compose up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: jodi, POSTGRES_PASSWORD: jodi, POSTGRES_DB: jodi }
+    ports: ["5433:5432"]
+    volumes: [jodi-db:/var/lib/postgresql/data]
+volumes:
+  jodi-db:
