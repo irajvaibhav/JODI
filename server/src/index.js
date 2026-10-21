@@ -21,7 +21,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/health', (req, res) => res.json({ ok: true }));
+// Touches the DB so uptime pings also count as activity (Supabase free pauses after 7 idle days).
+app.get('/health', async (req, res) => { await q('SELECT 1'); res.json({ ok: true }); });
 app.use('/auth', authRouter);
 
 // ---------- public share card (growth loop; no signup needed, no birth data, no photos) ----------

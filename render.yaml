@@ -1,4 +1,4 @@
-# Render Blueprint for the Jodi API. Database: use Neon/Supabase Postgres and paste its URL as DATABASE_URL.
+# Render Blueprint for the Jodi API. Database: Supabase ("Session pooler" URI) or Neon Postgres and paste its URL as DATABASE_URL.
 services:
   - type: web
     name: jodi-api
