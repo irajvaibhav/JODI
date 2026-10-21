@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ErrorText, Field, GradientButton, H1, Header, Logo, Screen, Sub } from '@/components/ui';
 import { api } from '@/lib/api';
+import { googleEnabled, googleIdToken } from '@/lib/google';
 import { nextOnboardingStep, useSession } from '@/lib/session';
 import { C } from '@/lib/theme';
 
@@ -23,6 +24,17 @@ export default function Login() {
       setSent(true); setDevCode(r.devCode ?? null);
     } catch (e: any) { setErr(e.message); }
     setBusy(false);
+  };
+
+  const google = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const idToken = await googleIdToken();
+      if (!idToken) { setBusy(false); return; } // cancelled
+      const r = await api<{ token: string }>('/auth/google', { body: { idToken } });
+      const me = await signIn(r.token);
+      router.replace((me?.onboarded ? '/discover' : me ? nextOnboardingStep(me) : '/') as any);
+    } catch (e: any) { setErr(e.message); setBusy(false); }
   };
 
   const verify = async () => {
@@ -46,6 +58,20 @@ export default function Login() {
           <Field label="Mobile number" placeholder="98765 43210" keyboardType="phone-pad" value={phone} onChangeText={setPhone} autoFocus maxLength={14} />
           <ErrorText>{err}</ErrorText>
           <GradientButton title="Send code" onPress={request} loading={busy} disabled={phone.replace(/\D/g, '').length < 10} />
+          {googleEnabled ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 20 }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
+                <Text style={{ color: C.muted }}>or</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: C.border }} />
+              </View>
+              <Pressable onPress={google} disabled={busy} accessibilityRole="button"
+                style={{ height: 52, borderRadius: 26, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: busy ? 0.6 : 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#4285F4' }}>G</Text>
+                <Text style={{ color: '#1F1F1F', fontSize: 16, fontWeight: '600' }}>Continue with Google</Text>
+              </Pressable>
+            </>
+          ) : null}
         </>
       ) : (
         <>

@@ -34,5 +34,7 @@ services:
         value: "true" # client demo: seeded profiles like each new user. Set "false" for real users.
       - key: GEMINI_MODEL
         value: gemini-3.5-flash,gemini-3.5-flash-lite
+      - key: GOOGLE_CLIENT_IDS
+        sync: false # Google Cloud *Web* OAuth client ID (the idToken audience)
       - key: APP_DOWNLOAD_URL
         sync: false

@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { io, type Socket } from 'socket.io-client';
 import { API, api, loadToken, saveToken, setUnauthorizedHandler } from './api';
+import { googleSignOut } from './google';
 
 export type Me = {
   id: string; name?: string; age?: number; city?: string; bio?: string; gender?: string; profession?: string; education?: string;
@@ -71,6 +72,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await api('/auth/logout', { method: 'POST' }).catch(() => {});
+    await googleSignOut(); // so the next Google login shows the account picker again
     await saveToken(null);
     socket?.disconnect();
     setSocket(null); setMe(null); setSignedIn(false); pushed.current = false;

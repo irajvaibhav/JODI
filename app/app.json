@@ -50,6 +50,12 @@
         {
           "color": "#C9A7FF"
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.set-real-ios-client-before-ios-build"
+        }
       ]
     ],
     "experiments": {
