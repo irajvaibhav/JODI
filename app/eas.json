@@ -4,11 +4,11 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-API.onrender.com" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://jodi-api.onrender.com" }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-API.onrender.com" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://jodi-api.onrender.com" }
     }
   }
 }
