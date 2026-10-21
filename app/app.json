@@ -59,7 +59,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.set-real-ios-client-before-ios-build"
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true,
