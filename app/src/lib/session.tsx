@@ -44,7 +44,6 @@ async function registerPush() {
   }
 }
 
-/** Where an unfinished user should resume onboarding. */
 export function nextOnboardingStep(me: Me): string {
   if (!me.dob) return '/onboarding/age';
   if (me.photos.length < 2) return '/onboarding/photos';
@@ -72,7 +71,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await api('/auth/logout', { method: 'POST' }).catch(() => {});
-    await googleSignOut(); // so the next Google login shows the account picker again
+    await googleSignOut();
     await saveToken(null);
     socket?.disconnect();
     setSocket(null); setMe(null); setSignedIn(false); pushed.current = false;

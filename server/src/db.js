@@ -19,8 +19,7 @@ export function track(userId, name, props = {}) {
     .catch(e => console.error('track', e.message));
 }
 
-// AES-256-GCM for birth details. BIRTH_KEY should be 64 hex chars; any other value is hashed to 32 bytes
-// so a mistyped key degrades to "still encrypted" instead of every birth-details save failing.
+// AES-256-GCM. BIRTH_KEY is 64 hex chars, anything else gets hashed.
 const key = () => {
   const k = process.env.BIRTH_KEY || '';
   return /^[0-9a-f]{64}$/i.test(k) ? Buffer.from(k, 'hex') : crypto.createHash('sha256').update(k).digest();

@@ -2,5 +2,3 @@ node_modules/
 .env
 .deploy.env
 *.log
-.export-check/
-.playwright-mcp/

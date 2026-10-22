@@ -10,7 +10,7 @@ import { C, SIGN_EMOJI } from '@/lib/theme';
 
 type Match = { id: string; shareCode: string; me: Card; user: Card; vibe: { headline: string; reasons: string[] } };
 
-// Zodiac avatars instead of photos: the other person never consented to their face being shared off-platform.
+// signs instead of photos: the other person didn't agree to their face being shared
 const Sign = ({ c, color }: { c: Card; color: string }) => (
   <View style={{ width: 96, height: 96, borderRadius: 48, borderWidth: 3, borderColor: color, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)' }}>
     <Text style={{ color, fontSize: 40 }}>{c.astro ? SIGN_EMOJI[c.astro.sun] : '✦'}</Text>
@@ -18,7 +18,6 @@ const Sign = ({ c, color }: { c: Card; color: string }) => (
   </View>
 );
 
-/** Compatibility Card: a shareable image (no birth details, no photos, first names only) + a public link. */
 export default function ShareCard() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [m, setM] = useState<Match | null>(null);

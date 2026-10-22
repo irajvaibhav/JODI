@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Exact birth details are AES-GCM encrypted (birth_enc). Only derived, high-level attributes are stored in clear.
+-- birth_enc is encrypted; only derived signs are stored in clear
 CREATE TABLE IF NOT EXISTS astro (
   user_id uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
   birth_enc text,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS preferences (
   intent text
 );
 
--- ponytail: images live in Postgres; move to object storage + CDN past a few thousand users.
+-- TODO: move images to object storage
 CREATE TABLE IF NOT EXISTS media (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS daily_cosmic (
   PRIMARY KEY (user_id, day)
 );
 
--- Product analytics + audit log in one stream; names prefixed "audit." are security events.
+-- analytics + audit log ("audit.*" events)
 CREATE TABLE IF NOT EXISTS events (
   id bigserial PRIMARY KEY,
   user_id uuid,

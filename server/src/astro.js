@@ -6,7 +6,6 @@ export const NAKSHATRAS = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashi
   'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
   'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
 
-// Plain-language one-liners so users needn't know astrology terms.
 export const SIGN_VIBES = {
   Aries: 'bold, energetic and quick to start things', Taurus: 'grounded, loyal and fond of life\'s comforts',
   Gemini: 'curious, witty and great at conversation', Cancer: 'caring, intuitive and home-loving',
@@ -40,10 +39,7 @@ export function zonedToUtc(dob, time, tz) {
   return new Date(guess - tzOffsetMs(new Date(first), tz));
 }
 
-/**
- * Western Sun sign (what Gen-Z already knows from horoscopes) + Vedic (sidereal, Lahiri) Moon sign,
- * Rising and Nakshatra (what Kundli matching uses). Unknown birth time -> noon, no Rising.
- */
+// Sun is tropical; Moon, Rising and Nakshatra are sidereal (Lahiri). No birth time -> noon, no Rising.
 export function computeAstro({ dob, time, lat, lng, tz }) {
   const date = zonedToUtc(dob, time, tz || 'Asia/Kolkata');
   const ay = ayanamsa(date.getTime());

@@ -5,7 +5,6 @@ import { api } from '@/lib/api';
 import { useMeta } from '@/lib/meta';
 import { C } from '@/lib/theme';
 
-/** "⋯" menu: Unmatch (if matched) / Block / Report. Report also blocks. Calls onDone after any of them. */
 export function SafetyMenu({ userId, name, matchId, onDone, dark }: { userId: string; name: string; matchId?: string | null; onDone: () => void; dark?: boolean }) {
   const meta = useMeta();
   const [reporting, setReporting] = useState(false);

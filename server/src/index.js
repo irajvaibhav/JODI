@@ -15,21 +15,21 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use((req, res, next) => {
-  // CORS * is safe here: auth is a bearer header, never cookies. Only the web preview build needs it.
+  // bearer auth, no cookies
   res.set({ 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'access-control-allow-origin': '*',
     'access-control-allow-headers': 'authorization, content-type', 'access-control-allow-methods': 'GET, POST, PUT, DELETE' });
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-// Touches the DB so uptime pings also count as activity (Supabase free pauses after 7 idle days).
+// hits the db so uptime pings keep supabase from pausing
 app.get('/health', async (req, res) => { await q('SELECT 1'); res.json({ ok: true }); });
 app.use('/auth', authRouter);
 app.get('/', (req, res) => res.send(pages.home()));
 app.get('/privacy', (req, res) => res.send(pages.privacy()));
 app.get('/terms', (req, res) => res.send(pages.terms()));
 
-// ---------- public share card (growth loop; no signup needed, no birth data, no photos) ----------
+// ---------- share card ----------
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 app.get('/c/:code', async (req, res) => {
   const m = await one(`SELECT m.score, pa.name a, pb.name b, pa.interests ia, pb.interests ib, aa.sun sa, ab.sun sb
@@ -51,7 +51,7 @@ li{text-align:left;margin:10px 0;color:#ddd}a{display:block;margin-top:24px;padd
 <a href="${esc(download)}">Find your own Jodi</a><p style="font-size:12px;color:#999;margin-top:20px">Compatibility is for fun & discovery — not a guarantee.</p></div></body></html>`);
 });
 
-// ---------- admin: human review of reports + funnel metrics ----------
+// ---------- admin ----------
 const admin = (req, res, next) => {
   const t = req.get('x-admin-token') || req.query.token || '';
   const want = process.env.ADMIN_TOKEN || '';
@@ -111,7 +111,7 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.type === 'entity.too.large' || err.code === 'LIMIT_FILE_SIZE' ? 'File too large' : 'Something went wrong' });
 });
 
-// Daily Cosmic push at 9am IST. ponytail: in-process timer; move to a real scheduler if running >1 instance.
+// daily push at 9am IST (in-process, assumes one instance)
 let lastDaily = null;
 setInterval(async () => {
   const day = new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10);

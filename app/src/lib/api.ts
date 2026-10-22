@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { File } from 'expo-file-system';
 
-// Set EXPO_PUBLIC_API_URL in .env (e.g. https://jodi-api.onrender.com). 10.0.2.2 = host machine from the Android emulator.
+// 10.0.2.2 = host machine from the Android emulator
 export const API = (process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:4000').replace(/\/$/, '');
 
 let token: string | null = null;
@@ -11,7 +11,6 @@ let onUnauthorized: (() => void) | null = null;
 export const getToken = () => token;
 export const setUnauthorizedHandler = (fn: () => void) => { onUnauthorized = fn; };
 
-// SecureStore has no web implementation; the web build is only a preview, so localStorage is fine there.
 const web = Platform.OS === 'web';
 export async function loadToken() {
   token = web ? localStorage.getItem('token') : await SecureStore.getItemAsync('token');
@@ -25,7 +24,6 @@ export async function saveToken(t: string | null) {
 }
 
 export const media = (p?: string | null) => (p ? (p.startsWith('http') ? p : API + p) : undefined);
-/** Chat images need auth; profile images don't (but sending the header is harmless). */
 export const authedImage = (p?: string | null) => (p ? { uri: media(p)!, headers: token ? { authorization: `Bearer ${token}` } : undefined } : undefined);
 
 type Opts = { method?: string; body?: unknown; form?: FormData };
@@ -42,7 +40,6 @@ export async function api<T = any>(path: string, { method, body, form }: Opts = 
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
     });
   } catch (e: any) {
-    // Only blame the network for network errors; anything else (e.g. an unsupported request body) shows its real message.
     throw new Error(/network|timed? ?out|connect|host|socket|offline/i.test(e?.message ?? '') ? 'No internet connection. Please try again.' : e?.message || 'Something went wrong');
   }
   const data = await r.json().catch(() => ({}));
@@ -51,7 +48,7 @@ export async function api<T = any>(path: string, { method, body, form }: Opts = 
   return data as T;
 }
 
-// SDK 58's global fetch is expo/fetch, which rejects RN's `{ uri, name, type }` parts; it needs an expo-file-system File.
+// expo/fetch doesn't support RN's { uri } form parts
 export function imageForm(field: string, uri: string, extra: Record<string, string> = {}) {
   const f = new FormData();
   f.append(field, (web ? { uri, name: 'photo.jpg', type: 'image/jpeg' } : new File(uri)) as any);

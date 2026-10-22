@@ -1,4 +1,4 @@
-// Demo data for client demos / closed alpha warm-up.
+// Demo data.
 //   npm run seed          -> creates 50 demo profiles (phones +910000000xxx)
 //   npm run seed likes    -> makes ~40% of demo profiles send a Jodi to every real user (so Likes / matches can be demoed)
 //   npm run seed purge    -> deletes all demo profiles
@@ -12,7 +12,7 @@ const WOMEN = ['Ananya', 'Riya', 'Priya', 'Ishita', 'Meera', 'Kavya', 'Sanya', '
   'Neha', 'Shreya', 'Tanvi', 'Mahi', 'Anjali', 'Kritika', 'Sneha', 'Radhika', 'Nandini', 'Ira'];
 const MEN = ['Rohan', 'Arjun', 'Kabir', 'Vihaan', 'Aarav', 'Dev', 'Karan', 'Ishaan', 'Rahul', 'Aditya', 'Neel', 'Sameer', 'Yash', 'Varun', 'Kunal',
   'Siddharth', 'Manav', 'Harsh', 'Pranav', 'Aryan', 'Nikhil', 'Rehan', 'Abhinav', 'Dhruv', 'Arnav'];
-// Hand-picked free-license Unsplash portraits of Indian adults (checked: single person, adult, no children). Demo only — purge before real users.
+// Unsplash portraits, demo only
 const PHOTOS = {
   women: [
     '1536766768598-e09213fdcf22', '1617297873650-aef8f4e00b9b', '1733316456795-5dded1b921fb', '1706943262459-3ef6ce03305c', '1624610806209-82a4cbb4339a',
@@ -52,7 +52,7 @@ async function create() {
     await q(`INSERT INTO astro(user_id, birth_enc, time_known, sun, moon, rising, nakshatra, element) VALUES ($1,$2,true,$3,$4,$5,$6,$7) ON CONFLICT (user_id) DO NOTHING`,
       [u.id, encrypt({ dob, time, place: `${city}, India` }), astro.sun, astro.moon, astro.rising, astro.nakshatra, astro.element]);
     await q(`INSERT INTO preferences(user_id, genders, age_min, age_max, max_km, intent) VALUES ($1,$2,18,40,1000,$3) ON CONFLICT (user_id) DO NOTHING`,
-      [u.id, [woman ? 'Man' : 'Woman'], META.intents[Math.floor(i / 2) % META.intents.length]]); // spread within each gender so every intent has matches
+      [u.id, [woman ? 'Man' : 'Woman'], META.intents[Math.floor(i / 2) % META.intents.length]]);
     const has = await one(`SELECT count(*)::int n FROM media WHERE owner_id=$1`, [u.id]);
     if (!has.n) {
       const id = PHOTOS[woman ? 'women' : 'men'][Math.floor(i / 2)];

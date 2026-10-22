@@ -16,7 +16,6 @@ const Tile = ({ label, value, hint }: { label: string; value?: string | null; hi
   </View>
 );
 
-/** Onboarding finale; also reachable later as "Astro Insights" with ?view=1. */
 export default function AstroProfile() {
   const { view } = useLocalSearchParams<{ view?: string }>();
   const router = useRouter();
@@ -25,7 +24,6 @@ export default function AstroProfile() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Refetch on focus so coming back from the birth-details screen shows the new signs.
   useFocusEffect(useCallback(() => { setErr(null); api<Astro>('/me/astro').then(setA).catch(e => setErr(e.message)); }, []));
 
   const finish = async () => {

@@ -10,7 +10,6 @@ export default function Splash() {
   const { ready, signedIn, me, refresh } = useSession();
   const router = useRouter();
   if (!ready) return <Screen><Loading /></Screen>;
-  // Signed in but /me failed (server waking up, bad network): offer a retry instead of spinning forever.
   if (signedIn && !me) return (
     <Screen>
       <View style={{ flex: 1, justifyContent: 'center' }}>

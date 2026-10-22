@@ -9,7 +9,6 @@ import { C } from '@/lib/theme';
 function Global() {
   const router = useRouter();
   const { me } = useSession();
-  // Someone Jodi'd us back while we're in the app -> celebrate immediately.
   useSocketEvent<{ matchId: string }>('match', ({ matchId }) => router.push({ pathname: '/match/[id]', params: { id: matchId } }));
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener(r => {

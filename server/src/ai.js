@@ -1,7 +1,7 @@
 import { one, q } from './db.js';
 import { SIGN_VIBES, NAKSHATRAS } from './astro.js';
 
-// Comma-separated fallback chain: busy (503), retired (404) or rate-limited (429) models fall through to the next.
+// tried in order; falls through on 503/404/429
 const MODELS = (process.env.GEMINI_MODEL || 'gemini-3.5-flash,gemini-3.5-flash-lite').split(',').map(s => s.trim()).filter(Boolean);
 
 const GUARDRAILS = `You write copy for Jodi, an astrology-flavoured dating app for Indian Gen-Z (18-30).
@@ -16,7 +16,6 @@ async function gemini(prompt, { image, maxTokens = 400 } = {}) {
   const parts = [{ text: prompt }];
   if (image) parts.push({ inline_data: { mime_type: image.mime, data: image.data.toString('base64') } });
   for (const model of MODELS) {
-    // Thinking off = faster + cheaper; models that reject the setting (400) are retried without it.
     for (const thinking of [{ thinkingConfig: { thinkingBudget: 0 } }, {}]) {
       try {
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -42,7 +41,6 @@ async function gemini(prompt, { image, maxTokens = 400 } = {}) {
   return null;
 }
 
-// Final privacy/guardrail layer on every AI string shown to users.
 const LEAKS = [
   /\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/, /\b\d{4}-\d{2}-\d{2}\b/, /\b\d{1,2}:\d{2}\s*(am|pm)?\b/i, /\b(19|20)\d{2}\b/,
   /\b\d{1,2}(st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i,
@@ -59,7 +57,7 @@ async function cached(key, fn) {
   return value;
 }
 
-// Only public, high-level fields ever go into a prompt.
+// only public fields go into prompts
 const pub = p => ({ name: p.name, interests: p.interests, bio: p.bio, sun: p.astro?.sun, moon: p.astro?.moon, profession: p.profession });
 
 export function vibe(me, them, compat, version) {
@@ -118,7 +116,6 @@ Return JSON {"summary": "<=45 words", "inLove": "<=25 words on how they show up 
 const SCAM = /(upi|paytm|gpay|phonepe|bitcoin|crypto|invest(ment)?|send (me )?money|whats ?app me|telegram|onlyfans|\b\d{10}\b|\+91)/i;
 const ABUSE = /\b(f+u+c+k+ (you|off)|bitch|slut|whore|randi|madarchod|behenchod|chutiya|kill yourself|kys)\b/i;
 
-/** Fast local check runs inline; Gemini check runs after delivery and raises a report for human review. */
 export function quickTextCheck(text) {
   if (ABUSE.test(text)) return 'harassment';
   if (SCAM.test(text)) return 'possible_scam';

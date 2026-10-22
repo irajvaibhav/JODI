@@ -10,11 +10,9 @@ const THRESHOLD = W * 0.28;
 
 export type SwipeHandle = { swipe: (dir: 'left' | 'right') => void };
 
-/** Top card of the Discover stack. Drag right = Jodi, left = Pass, tap = details. */
 export function SwipeCard({ card, onSwiped, onOpen, handleRef }: {
   card: Card; onSwiped: (dir: 'left' | 'right') => void; onOpen: () => void; handleRef?: React.MutableRefObject<SwipeHandle | null>;
 }) {
-  // Card is keyed by user id, so these are created once per card and their closures stay valid.
   const [pos] = useState(() => new Animated.ValueXY());
   const fly = (dir: 'left' | 'right') =>
     Animated.timing(pos, { toValue: { x: (dir === 'right' ? 1.5 : -1.5) * W, y: 40 }, duration: 220, useNativeDriver: true }).start(() => onSwiped(dir));

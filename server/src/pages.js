@@ -1,6 +1,4 @@
-// Public pages Google OAuth (and the Play Store) require: homepage, privacy policy, terms.
-// ponytail: plain HTML strings; move to a real site/CMS when marketing wants to edit copy.
-// The policy text is a starting draft that matches what the code does — have it reviewed by a lawyer before public launch.
+// homepage, privacy policy and terms (needed for Google OAuth / Play Store)
 
 const contact = () => (process.env.SUPPORT_EMAIL ? `<a href="mailto:${process.env.SUPPORT_EMAIL}">${process.env.SUPPORT_EMAIL}</a>` : 'Help & Support inside the app');
 

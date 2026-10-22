@@ -12,7 +12,6 @@ export const api = Router();
 const upload = multer({ limits: { fileSize: 6 * 1024 * 1024 }, storage: multer.memoryStorage() });
 const IMAGE = /^image\/(jpeg|png|webp)$/;
 
-// Express 5 forwards async errors; h() kept only so handlers read uniformly.
 const h = fn => (req, res, next) => fn(req, res, next).catch(next);
 const bad = (res, error, status = 400) => res.status(status).json({ error });
 const str = (v, max) => v == null ? undefined : String(v).trim().slice(0, max);
@@ -20,7 +19,7 @@ const str = (v, max) => v == null ? undefined : String(v).trim().slice(0, max);
 api.get('/meta', (req, res) => res.json(META));
 api.get('/places', h(async (req, res) => res.json(req.query.q?.length >= 2 ? await searchPlaces(req.query.q) : [])));
 
-// Profile images are public-by-unguessable-id (like any CDN). Chat images require being in the match.
+// profile images are public by id, chat images need a match
 api.get('/media/:id', h(async (req, res, next) => {
   if (!/^[0-9a-f-]{36}$/.test(req.params.id)) return res.sendStatus(404);
   const m = await one('SELECT kind, mime, data, owner_id, status FROM media WHERE id=$1', [req.params.id]);
@@ -55,7 +54,7 @@ const km = (a, b) => {
   return 12742 * Math.asin(Math.sqrt(x));
 };
 
-// Whitelist of what other users may ever see. Exact DOB / birth time / birth place never leave via this.
+// what other users can see - never birth details
 function publicCard(u, viewer, compat) {
   const d = viewer ? km(viewer, u) : null;
   return {
@@ -96,7 +95,7 @@ api.put('/me/birth', h(async (req, res) => {
   const geo = place ? await geocode(place).catch(() => null) : null;
   if (place && !geo) return bad(res, 'We couldn\'t find that birth place. Try "City, Country".');
   const astro = computeAstro({ dob, time: time || null, lat: geo?.lat, lng: geo?.lng, tz: geo?.tz });
-  // Astro first: the app treats a saved DOB as "birth step done", so a failure here must not leave DOB without astro.
+  // astro before dob, otherwise a failed save skips the birth step
   await q(`INSERT INTO astro(user_id, birth_enc, time_known, sun, moon, rising, nakshatra, element) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
     ON CONFLICT (user_id) DO UPDATE SET birth_enc=$2, time_known=$3, sun=$4, moon=$5, rising=$6, nakshatra=$7, element=$8, updated_at=now()`,
     [req.uid, encrypt({ dob, time: time || null, place: geo?.label || null }), astro.timeKnown, astro.sun, astro.moon, astro.rising, astro.nakshatra, astro.element]);
@@ -169,7 +168,7 @@ api.post('/me/complete', h(async (req, res) => {
   if (!u.onboarded) {
     await q('UPDATE users SET onboarded=true WHERE id=$1', [req.uid]);
     track(req.uid, 'onboarding.completed');
-    // Client-demo only: a few seeded profiles who'd want to meet this user "like" them, so Likes/match can be shown. Turn off for real users.
+    // demo only
     if (process.env.DEMO_LIKES === 'true') await q(`INSERT INTO swipes(swiper, target, action)
       SELECT d.id, $1, 'jodi' FROM users d JOIN profiles dp ON dp.user_id=d.id JOIN preferences dpr ON dpr.user_id=d.id
       WHERE d.phone LIKE '+910000000%' AND $2 = ANY(dpr.genders) AND (cardinality($3::text[])=0 OR dp.gender = ANY($3))
@@ -215,7 +214,7 @@ api.get('/me/export', h(async (req, res) => {
 }));
 
 api.delete('/me/astro', h(async (req, res) => {
-  // DOB stays (it's needed to prove 18+ and show age); birth time, place and all astro attributes go.
+  // dob stays for the 18+ check
   await q('DELETE FROM astro WHERE user_id=$1', [req.uid]);
   await q(`DELETE FROM ai_cache WHERE key LIKE $1`, [`astro:${req.uid}:%`]);
   track(req.uid, 'audit.astro_deleted');
@@ -237,9 +236,9 @@ api.post('/events', h(async (req, res) => {
 // ---------- discovery ----------
 
 const dayKey = () => new Date(Date.now() + 5.5 * 3600e3).toISOString().slice(0, 10); // IST day
-const jitter = (a, b) => crypto.createHash('md5').update(a + b + dayKey()).digest()[0] / 255 * 4; // 0–4 pts, stable per day
+const jitter = (a, b) => crypto.createHash('md5').update(a + b + dayKey()).digest()[0] / 255 * 4;
 
-// ponytail: scores up to 500 candidates in JS per request; precompute/cache in Redis past ~50k users.
+// TODO: cache scores, this scores up to 500 candidates per request
 async function candidates(me, { filter, limit = 20, extraWhere = '', params = [] } = {}) {
   const rows = (await q(`${USER_SQL}
     WHERE u.onboarded AND u.discoverable AND NOT u.banned AND u.id<>$1
@@ -339,7 +338,6 @@ api.get('/daily', h(async (req, res) => {
     };
     await q('INSERT INTO daily_cosmic(user_id, day, target_id, data) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING', [req.uid, day, data.jodiId, data]);
   }
-  // Always re-serialise the Jodi so blocks / swipes since generation are respected.
   let jodi = null;
   if (data.jodiId && !(await blockedEither(req.uid, data.jodiId))) {
     const [me, them] = await Promise.all([loadUser(req.uid), loadUser(data.jodiId)]);

@@ -1,6 +1,6 @@
 import { SIGNS, ELEMENTS, NAKSHATRAS, elementOf } from './astro.js';
 
-// Single source of truth for onboarding options; the app fetches this from GET /meta.
+// served to the app via GET /meta
 export const META = {
   interests: ['Travel', 'Music', 'Reading', 'Fitness', 'Food', 'Movies', 'Art', 'Tech', 'Dance', 'Photography', 'Gaming', 'Yoga',
     'Cooking', 'Fashion', 'Cricket', 'Football', 'Trekking', 'Poetry', 'Anime', 'Startups', 'Pets', 'Coffee', 'Spirituality',
@@ -27,14 +27,13 @@ export const META = {
   reportReasons: ['Fake profile', 'Inappropriate photos', 'Harassment', 'Spam or scam', 'Underage', 'Other'],
 };
 
-// Open decision in the PRD ("how much weight should astrology have") — tune here.
 export const WEIGHTS = { astro: 0.35, interests: 0.25, personality: 0.2, lifestyle: 0.2 };
 
 const GANA = [0, 1, 2, 1, 0, 1, 0, 0, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1, 0]; // 0 Deva, 1 Manushya, 2 Rakshasa
 const NADI = [0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0, 0, 1, 2];
 const GANA_SCORE = { '00': 100, '11': 100, '22': 100, '01': 80, '10': 80, '12': 40, '21': 40, '02': 30, '20': 30 };
 const BHAKOOT = { 1: 80, 7: 85, 5: 95, 9: 95, 3: 80, 11: 80, 4: 70, 10: 70, 2: 55, 12: 55, 6: 50, 8: 50 };
-const scale = raw => Math.round(55 + raw * 0.43); // keep the band friendly: 55–98
+const scale = raw => Math.round(55 + raw * 0.43); // 55-98
 
 function astroScore(a, b, reasons) {
   if (!a?.sun || !b?.sun) return 60;
@@ -85,7 +84,6 @@ function lifestyleScore(a = {}, b = {}, reasons) {
   return scale(100 * same.length / keys.length);
 }
 
-/** Deterministic, auditable compatibility. `x` = { astro, interests, personality, lifestyle, intent }. */
 export function compatibility(x, y) {
   const reasons = [];
   const parts = {
@@ -103,7 +101,6 @@ export function compatibility(x, y) {
   return { overall: Math.round(overall), ...parts, reasons: reasons.slice(0, 4).map(r => r.text), difference: difference(x, y) };
 }
 
-// One neutral "potential difference" — framed as something to talk about, never as a red flag.
 const DIFF_COPY = {
   sleep: (a, b) => `${a} meets ${b.toLowerCase()} — you might need to agree on date times!`,
   workout: () => 'Different fitness routines — maybe one of you converts the other?',
@@ -120,7 +117,7 @@ function difference(x, y) {
   return null;
 }
 
-/** Hard intent filter: "Still figuring it out" (or unset) is open to everyone; otherwise intents must match. */
+// "Still figuring it out" (or unset) matches everyone
 export const intentsCompatible = (a, b) => !a || !b || a === b || [a, b].includes('Still figuring it out');
 
 export { SIGNS, ELEMENTS };
