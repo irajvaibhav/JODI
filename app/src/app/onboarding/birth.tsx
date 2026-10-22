@@ -18,7 +18,8 @@ export default function Birth() {
   const edit = isEdit(params);
   const router = useRouter();
   const { me, refresh } = useSession();
-  const [dob, setDob] = useState(me?.birth?.dob || '');
+  // Fall back to the account DOB: after "Delete astrology data" birth is gone but DOB stays (and is locked).
+  const [dob, setDob] = useState(me?.birth?.dob || me?.dob?.slice(0, 10) || '');
   const [time, setTime] = useState(me?.birth?.time || '');
   const [unknown, setUnknown] = useState(!!me?.birth && !me.birth.time);
   const [place, setPlace] = useState(me?.birth?.place || '');

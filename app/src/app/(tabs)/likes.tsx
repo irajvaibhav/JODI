@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { GradientButton, Loading, OutlineButton, Screen } from '@/components/ui';
@@ -19,7 +19,8 @@ export default function Likes() {
       const r = await api<{ matched: boolean; matchId?: string }>('/swipe', { body: { targetId: c.id, action: 'jodi' } });
       setLikes(l => l?.filter(x => x.id !== c.id) ?? null);
       if (r.matchId) router.push({ pathname: '/match/[id]', params: { id: r.matchId } });
-    } finally { setBusy(false); }
+    } catch (e: any) { Alert.alert('Could not like back', e.message); }
+    setBusy(false);
   };
 
   if (!likes) return <Screen><Loading /></Screen>;

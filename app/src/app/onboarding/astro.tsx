@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { ErrorText, GradientButton, H1, Header, Loading, Progress, Screen, Sub } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
@@ -25,14 +25,28 @@ export default function AstroProfile() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => { api<Astro>('/me/astro').then(setA).catch(e => setErr(e.message)); }, []);
+  // Refetch on focus so coming back from the birth-details screen shows the new signs.
+  useFocusEffect(useCallback(() => { setErr(null); api<Astro>('/me/astro').then(setA).catch(e => setErr(e.message)); }, []));
 
   const finish = async () => {
     setBusy(true); setErr(null);
     try { await api('/me/complete', { method: 'POST' }); await refresh(); router.replace('/discover'); } catch (e: any) { setErr(e.message); setBusy(false); }
   };
 
-  if (!a) return <Screen>{err ? <><Header /><ErrorText>{err}</ErrorText></> : <Loading />}</Screen>;
+  if (!a) return (
+    <Screen>
+      {err ? (
+        <>
+          <Header title={view ? 'Astro Insights' : undefined} />
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 44, textAlign: 'center', color: C.lilac, marginBottom: 12 }}>✦</Text>
+            <ErrorText>{err}</ErrorText>
+            <GradientButton title="Add birth details" onPress={() => router.push('/onboarding/birth?edit=1')} />
+          </View>
+        </>
+      ) : <Loading />}
+    </Screen>
+  );
   return (
     <Screen scroll>
       {view ? <Header title="Astro Insights" /> : <Progress step={7} />}

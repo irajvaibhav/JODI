@@ -11,7 +11,14 @@ export type Meta = {
 let cache: Meta | null = null;
 export function useMeta() {
   const [meta, setMeta] = useState<Meta | null>(cache);
-  useEffect(() => { if (!cache) api<Meta>('/meta').then(m => { cache = m; setMeta(m); }).catch(() => {}); }, []);
+  useEffect(() => {
+    if (cache) return;
+    let t: ReturnType<typeof setTimeout>;
+    // Retry until it loads: screens that need meta show a spinner meanwhile, so giving up would leave them stuck.
+    const load = () => api<Meta>('/meta').then(m => { cache = m; setMeta(m); }).catch(() => { t = setTimeout(load, 3000); });
+    load();
+    return () => clearTimeout(t);
+  }, []);
   return meta;
 }
 

@@ -7,9 +7,18 @@ import { C } from '@/lib/theme';
 const STARS = Array.from({ length: 40 }, (_, i) => ({ top: (i * 37) % 70, left: (i * 53) % 100, size: (i % 3) + 1 }));
 
 export default function Splash() {
-  const { ready, signedIn, me } = useSession();
+  const { ready, signedIn, me, refresh } = useSession();
   const router = useRouter();
-  if (!ready || (signedIn && !me)) return <Screen><Loading /></Screen>;
+  if (!ready) return <Screen><Loading /></Screen>;
+  // Signed in but /me failed (server waking up, bad network): offer a retry instead of spinning forever.
+  if (signedIn && !me) return (
+    <Screen>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Text style={{ color: C.muted, textAlign: 'center', marginBottom: 20 }}>Couldn't reach Jodi. Check your connection and try again.</Text>
+        <GradientButton title="Try again" onPress={refresh} />
+      </View>
+    </Screen>
+  );
   if (signedIn && me) return <Redirect href={(me.onboarded ? '/discover' : nextOnboardingStep(me)) as any} />;
 
   return (

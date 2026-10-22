@@ -96,10 +96,11 @@ api.put('/me/birth', h(async (req, res) => {
   const geo = place ? await geocode(place).catch(() => null) : null;
   if (place && !geo) return bad(res, 'We couldn\'t find that birth place. Try "City, Country".');
   const astro = computeAstro({ dob, time: time || null, lat: geo?.lat, lng: geo?.lng, tz: geo?.tz });
-  await q('UPDATE users SET dob=$2 WHERE id=$1', [req.uid, dob]);
+  // Astro first: the app treats a saved DOB as "birth step done", so a failure here must not leave DOB without astro.
   await q(`INSERT INTO astro(user_id, birth_enc, time_known, sun, moon, rising, nakshatra, element) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
     ON CONFLICT (user_id) DO UPDATE SET birth_enc=$2, time_known=$3, sun=$4, moon=$5, rising=$6, nakshatra=$7, element=$8, updated_at=now()`,
     [req.uid, encrypt({ dob, time: time || null, place: geo?.label || null }), astro.timeKnown, astro.sun, astro.moon, astro.rising, astro.nakshatra, astro.element]);
+  await q('UPDATE users SET dob=$2 WHERE id=$1', [req.uid, dob]);
   track(req.uid, 'onboarding.birth', { timeKnown: astro.timeKnown });
   res.json({ astro: { ...astro, nakshatra: NAKSHATRAS[astro.nakshatra] }, age });
 }));

@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { File } from 'expo-file-system';
 
 // Set EXPO_PUBLIC_API_URL in .env (e.g. https://jodi-api.onrender.com). 10.0.2.2 = host machine from the Android emulator.
 export const API = (process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:4000').replace(/\/$/, '');
@@ -40,8 +41,9 @@ export async function api<T = any>(path: string, { method, body, form }: Opts = 
       },
       body: form ?? (body !== undefined ? JSON.stringify(body) : undefined),
     });
-  } catch {
-    throw new Error('No internet connection. Please try again.');
+  } catch (e: any) {
+    // Only blame the network for network errors; anything else (e.g. an unsupported request body) shows its real message.
+    throw new Error(/network|timed? ?out|connect|host|socket|offline/i.test(e?.message ?? '') ? 'No internet connection. Please try again.' : e?.message || 'Something went wrong');
   }
   const data = await r.json().catch(() => ({}));
   if (r.status === 401 && token) onUnauthorized?.();
@@ -49,9 +51,10 @@ export async function api<T = any>(path: string, { method, body, form }: Opts = 
   return data as T;
 }
 
+// SDK 58's global fetch is expo/fetch, which rejects RN's `{ uri, name, type }` parts; it needs an expo-file-system File.
 export function imageForm(field: string, uri: string, extra: Record<string, string> = {}) {
   const f = new FormData();
-  f.append(field, { uri, name: 'photo.jpg', type: 'image/jpeg' } as any);
+  f.append(field, (web ? { uri, name: 'photo.jpg', type: 'image/jpeg' } : new File(uri)) as any);
   for (const [k, v] of Object.entries(extra)) f.append(k, v);
   return f;
 }

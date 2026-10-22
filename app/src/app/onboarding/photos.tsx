@@ -32,13 +32,13 @@ export default function Photos() {
     if (edit && photos.length <= 2) return Alert.alert('Keep at least 2 photos', 'Add another photo before removing this one.');
     Alert.alert('Remove photo?', '', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => { await api(`/me/photos/${ids[i]}`, { method: 'DELETE' }); refresh(); } },
+      { text: 'Remove', style: 'destructive', onPress: async () => { await api(`/me/photos/${ids[i]}`, { method: 'DELETE' }).catch((e: any) => setErr(e.message)); refresh(); } },
     ]);
   };
 
   const makeMain = async (i: number) => {
     if (i === 0) return;
-    await api('/me/photos/order', { method: 'PUT', body: { ids: [ids[i], ...ids.filter((_, j) => j !== i)] } });
+    await api('/me/photos/order', { method: 'PUT', body: { ids: [ids[i], ...ids.filter((_, j) => j !== i)] } }).catch((e: any) => setErr(e.message));
     refresh();
   };
 
